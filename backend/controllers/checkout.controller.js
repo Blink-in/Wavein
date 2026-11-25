@@ -26,7 +26,7 @@ const isValidEmail = (email) => {
 
 export const createCheckout = async (req, res) => {
   try {
-    const { customer, shippingAddress, deliveryZoneId } = req.body;
+const { customer, shippingAddress, deliveryZoneId } = req.body || {};
 
     if (!customer || typeof customer !== "object") {
       return res.status(400).json({
