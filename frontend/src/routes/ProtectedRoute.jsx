@@ -31,7 +31,19 @@ const ProtectedRoute = ({ requiredRole }) => {
   }
 
   if (requiredRole && user.platformRole !== requiredRole) {
-    return <Navigate to="/dashboard" replace />;
+    const roleHome =
+      user.platformRole === "platformAdmin"
+        ? "/admin"
+        : user.platformRole === "user"
+          ? "/dashboard"
+          : "/";
+
+    return (
+      <Navigate
+        to={roleHome === location.pathname ? "/" : roleHome}
+        replace
+      />
+    );
   }
 
   return <Outlet />;

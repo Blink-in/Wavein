@@ -14,6 +14,7 @@ import checkoutRoutes from "./routes/checkout.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import { handlePaystackWebhook } from "./controllers/payment.controller.js";
+import customerRoutes from "./routes/customer.routes.js";
 
 import { connectDB } from "./config/db.js";
 import {notFound} from "./middleware/notFound.middleware.js";
@@ -89,6 +90,8 @@ app.use("/api/delivery", deliveryRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/storefront", checkoutRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/customers", customerRoutes);
+
 
 app.use(notFound);
 app.use(errorHandler);

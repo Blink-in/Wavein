@@ -316,3 +316,102 @@ export const trackGuestOrder = async (req, res) => {
     });
   }
 };
+
+export const getMerchantDashboard = async (req, res) => {
+  try {
+    const store = await getMerchantStore(req.user._id);
+
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: "Store not found. Please set up your store first.",
+      });
+    }
+
+    const [summaryResult, recentOrders] = await Promise.all([
+      Order.aggregate([
+        {
+          $match: {
+            store: store._id,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+
+            totalOrders: {
+              $sum: 1,
+            },
+
+            pendingOrders: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$orderStatus", "pending"] },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            paidOrders: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$paymentStatus", "paid"] },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            totalRevenue: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$paymentStatus", "paid"] },
+                  "$total",
+                  0,
+                ],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            totalOrders: 1,
+            pendingOrders: 1,
+            paidOrders: 1,
+            totalRevenue: 1,
+          },
+        },
+      ]),
+
+      Order.find({ store: store._id })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select(
+          "orderNumber customer shippingAddress total paymentStatus orderStatus createdAt"
+        )
+        .lean(),
+    ]);
+
+    const stats = summaryResult[0] || {
+      totalOrders: 0,
+      pendingOrders: 0,
+      paidOrders: 0,
+      totalRevenue: 0,
+    };
+
+    return res.status(200).json({
+      success: true,
+      stats,
+      recentOrders,
+    });
+  } catch (error) {
+    console.error("Get merchant dashboard error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to load merchant dashboard statistics.",
+    });
+  }
+};
